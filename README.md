@@ -1,3 +1,22 @@
+**WARNING** this `develop` branch is abandoned, please use the [`master` branch](https://github.com/SoftInstigate/restheart/tree/master) only for your Pull Requests.
+
+>At present RESTHeart's Git repo is organized mimicking Gitflow, but this kind of code organization is not regarded as a good practice for products. We do have a "develop" branch with SNAPSHOT and a "master" with final releases. Now we have reached 1.0.0 and we need to support a more functional organization of code to support future versions and their maintenance.
+
+# New branching policy
+
+There are two outstanding examples to follow:
+1. https://github.com/spring-projects/spring-boot/
+1. https://github.com/undertow-io/undertow/
+
+These projects have one "master" where all the new code is committed (unreleased versions) while released versions are tagged and then maintained in their own branches (named `1.0.x`, `1.1.x`, `1.2.x`, ....)
+
+## Process
+
+1. As soon as a minor release is finalized (e.g we released `1.0.0`) we tag it on `master`
+1. we create the related support branch, in this case named `1.0.x`, with version set to `1.0.1-SNAPSHOT`. Hotfixes for `1.0.x` will go here.
+1. The master branch is the where `1.1.x` development begins, and the POM version is set at `1.1.0-SNAPSHOT`
+1. When `1.1.0` is final, the process starts again from 1.
+
 # RESTHeart #
 
 The data REST API server for MongoDB.
@@ -45,25 +64,24 @@ Please follow the next sections for a full local installation.
 Download the latest release from [github releases page](https://github.com/SoftInstigate/restheart/releases/latest), unpack the archive and just run the jar.
 
 	$ java -server -jar restheart.jar
-	
+
 You might also want to specify a configuration file:
 
 	$ java -server -jar restheart.jar etc/restheart.yml
-	
+
 * configuration file [documentation](http://restheart.org/docs/configuration.html)
 * example configuration file [restheart.yml](http://restheart.org/docs/configuration.html#conf-example)
-	
+
 ## How to build it
 
 Clone the repository and update the git submodules (the HAL browser is included in restheart as a submodule):
 
-    $ git submodule update --init --recursive 
-    
+    $ git submodule update --init --recursive
+
 Build the project with maven
 
     $ mvn clean package
-    
+
 Optionally run the integration test suite (make sure mongod is running on localhost on default port 27017 without authentication, i.e. no --auth option specified)
 
     $ mvn verify
-   
