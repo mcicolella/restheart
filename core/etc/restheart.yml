@@ -7,6 +7,7 @@
  # You can setup a listener per protocol (up to 2).
 
  # To enable HTTPS, configure a certificate. See https://restheart.org/docs/security/tls/
+ # The self signed certificate embedded in RESTHeart is insecure and only for testing purpose
 https-listener: {{{https-listener}}}
 https-host: {{{https-host}}}
 https-port: {{{https-port}}}
@@ -28,18 +29,7 @@ ajp-port: {{{ajp-port}}}
 
 instance-name: {{{instance-name}}}
 
-#### Instance base URL
-
- # Optionally define the base url of this instance
- # Useful when RESTHeart is mediated by a reverse proxy or an API gateway
- # to determine the instance's correct URL
- # It is used by the MongoService to build the Location response header
- # when a document is created with a POST request that doesn't include the _id
- # If not specified, the Location is generated from the request URL
-
- # instance-base-url: https://api.example.io
-
-#### Proxied resources
+### Proxied resources
 
  # location (required) The location URI to bound to the HTTP proxied server.
  # proxy-pass (required) The URL of the HTTP proxied server. It can be an array of URLs for load balancing.
@@ -71,7 +61,7 @@ instance-name: {{{instance-name}}}
 
 mongo-uri: {{{mongo-uri}}}
 
-#### MongoDb resources
+## MongoDb resources
 
 # Use mongo-mounts to expose MongoDb resources binding them to API URIs.
 #
@@ -136,21 +126,23 @@ static-resources-mounts:
 #    welcome-file: index.html
 #    embedded: false
 
-#### Security
+### Security
 
 ## SSL Configuration
 
-# Configure the keystore to enable the https listener.
+ # Configure the keystore to enable the https listener.
+
+ # RESTHeart Security comes with a self-signed certificate that makes
+ # straightforward enabling https.
+ # Specify use-embedded-keystore: true to use it (this is the default setting).
+ # Using the self-signed certificate leads to issues with some clients;
+ # for instance, with curl you need to specify the "--insecure" option or you'll get an error message.
+
+use-embedded-keystore: true
 
  # To use your own certificate you need to import it (and eventually the CA certificates chain) into a java keystore
- # and specify the keystore-file,keystore-password and certpassword configuration properties.
- # Two scripts are available to generate the keystore:
- ## 1) generate-self-signed-keystore.sh
- ##    Generate a self signed certificate and import it in the java keystore
- ##    https://github.com/SoftInstigate/restheart/blob/master/core/bin/generate-self-signed-keystore.sh
- ## 2) convert-letsencrypt-java-keystore.sh
- ##    Generate the keystore from a https://letsencrypt.org free certificate
- ##    https://github.com/SoftInstigate/restheart/blob/master/core/bin/convert-letsencrypt-java-keystore.sh
+ # and specify use-embedded-keystore: false and the keystore-file,keystore-password and certpassword configuration properties.
+ # Refer to the java keystore documentation for that.
 
 #keystore-file: /path/to/keystore/file
 #keystore-password: password
@@ -172,7 +164,7 @@ auth-mechanisms:
     enabled: true
   basicAuthMechanism:
     enabled: true
-    authenticator: fileRealmAuthenticator
+    authenticator: ldapRealmAuthenticator
   jwtAuthenticationMechanism:
     enabled: false
     algorithm: HS256
@@ -223,6 +215,19 @@ authenticators:
     cache-size: 1000
     cache-ttl: 60000
     cache-expire-policy: AFTER_WRITE
+  ldapRealmAuthenticator:
+    enabled: true
+    security-authentication: simple
+    ldap-server-url: ldap://ldap.forumsys.com 
+    search-base: dc=example,dc=com
+    user-search-filter: uid
+    manager-dn: cn=read-only-admin,dc=example,dc=com
+    manager-password: password
+    use-cn: true
+    cache-enabled: false
+    cache-size: 1000
+    cache-ttl: 60000
+    cache-expire-policy: AFTER_READ
 
 ## Authorizers
 
@@ -327,12 +332,6 @@ plugins-args:
     enabled: false
     uri: /echo
     secured: false
-  graphql:
-    enabled: true
-    uri: /graphql
-    secured: false
-    db: restheart
-    collection: apps
 
 #### Logging
 
@@ -509,3 +508,4 @@ connection-options:
   # unless the server does not have an accurate clock.
   # Defaults to true
   ALWAYS_SET_DATE: true
+
